@@ -1,0 +1,3 @@
+[submodule "msp_scraper_lib"]
+	path = msp_scraper_lib
+	url = git@github.com:animeshkundu/msp_scraper_lib.git
