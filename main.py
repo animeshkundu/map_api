@@ -16,7 +16,7 @@ from msp_scraper_lib.base import SmartPrice
 
 # import and define tornado-y things
 from tornado.options import define
-define("port", default=5000, help="run on the given port", type=int)
+define("port", default=int(os.environ.get('PORT', 5000)), help="run on the given port", type=int)
 
 
 # application settings and handle mapping info
