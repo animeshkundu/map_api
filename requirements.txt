@@ -1,0 +1,7 @@
+gevent>=0.4.9
+tornado>=4.4.1
+futures>=3.0.5
+bs4>=0.0.1
+requests>=2.11.1
+lxml>=3.6.4
+
