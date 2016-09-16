@@ -23,6 +23,7 @@ define("port", default=int(os.environ.get('PORT', 5000)), help="run on the given
 class Application(tornado.web.Application):
     def __init__(self):
         handlers = [
+            (r"/", PingHandler),
             (r"/ping", PingHandler),
             (r"/pricesearch", SearchPriceHandler),
             (r"/sellersearch", SearchSellerHandler),
