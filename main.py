@@ -25,7 +25,8 @@ class Application(tornado.web.Application):
         handlers = [
             (r"/ping", PingHandler),
             (r"/pricesearch", SearchPriceHandler),
-            (r"/sellersearch", SearchSellerHandler)
+            (r"/sellersearch", SearchSellerHandler),
+            (r"/fetch", UrlHandler)
         ]
         settings = dict(debug=True)
         tornado.web.Application.__init__(self, handlers, **settings)
@@ -35,6 +36,32 @@ class PingHandler(tornado.web.RequestHandler):
     
     def get(self):
         self.write("Everything's okay")
+
+    def post(self) :
+        self.get()
+
+
+class UrlHandler(tornado.web.RequestHandler) :
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers = 10)
+
+    @tornado.concurrent.run_on_executor
+    def fetch(self, url) :
+        response = []
+
+        if url:
+            sp = SmartPrice()
+            results = sp.list(url)
+
+            for r in results :
+                response.append(r.dumptojson)
+
+        return response
+
+    @tornado.gen.coroutine
+    def get(self) :
+        url = self.get_query_argument('url', None)
+        response = yield self.fetch(url)
+        self.write(json.dumps(response))
 
     def post(self) :
         self.get()
