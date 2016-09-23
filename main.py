@@ -70,7 +70,7 @@ class FetchProductHandler(tornado.web.RequestHandler) :
 
 
 class FetchSellerHandler(tornado.web.RequestHandler) :
-    executor = concurrent.futures.ThreadPoolExecutor(max_workers = 10)
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers = 100)
 
     @tornado.concurrent.run_on_executor
     def fetch(self, url) :
