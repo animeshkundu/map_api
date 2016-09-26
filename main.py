@@ -87,7 +87,12 @@ class FetchSellerHandler(tornado.web.RequestHandler) :
 
     @tornado.gen.coroutine
     def get(self) :
-        url = self.get_query_argument('url', None)
+        msp_id = self.get_query_argument('msp_id', None)
+        response = []
+        if msp_id :
+            url = 'http://www.mysmartprice.com/mobile/ptrows_details.php?mspid=' + str(msp_id) + '&data=table'
+        else :
+            url = self.get_query_argument('url', None)
         response = yield self.fetch(url)
         self.write(json.dumps(response))
 
