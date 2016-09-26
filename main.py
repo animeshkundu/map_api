@@ -3,15 +3,16 @@
 from gevent import monkey
 monkey.patch_all()
 
+import re
+import json
 import os.path
 import tornado.escape
 import tornado.httpserver
 import tornado.ioloop
 import tornado.options
 import tornado.web
-
-import json
 import concurrent.futures
+
 from msp_scraper_lib.base import SmartPrice
 
 # import and define tornado-y things
@@ -29,6 +30,7 @@ class Application(tornado.web.Application):
             (r"/sellersearch", SearchSellerHandler),
             (r"/fetchproduct", FetchProductHandler),
             (r"/fetchseller", FetchSellerHandler),
+            (r"/matchproduct", MatchProductHandler),
         ]
         settings = dict(debug=True)
         tornado.web.Application.__init__(self, handlers, **settings)
@@ -73,27 +75,27 @@ class FetchSellerHandler(tornado.web.RequestHandler) :
     executor = concurrent.futures.ThreadPoolExecutor(max_workers = 100)
 
     @tornado.concurrent.run_on_executor
-    def fetch(self, url) :
+    def fetch(self, pid = None, url = None) :
         response = []
-
-        if url :
-            sp = SmartPrice()
+        results = []
+        sp = SmartPrice()
+        
+        if pid :
+            purl = sp.pidurl(pid)
+            results = sp.seller(purl)
+        elif url :
             results = sp.seller(url)
 
-            for r in results :
-                response.append(r.dumptojson)
+        for r in results :
+            response.append(r.dumptojson)
 
         return response
 
     @tornado.gen.coroutine
     def get(self) :
         msp_id = self.get_query_argument('msp_id', None)
-        response = []
-        if msp_id :
-            url = 'http://www.mysmartprice.com/mobile/ptrows_details.php?mspid=' + str(msp_id) + '&data=table'
-        else :
-            url = self.get_query_argument('url', None)
-        response = yield self.fetch(url)
+        url = self.get_query_argument('url', None)
+        response = yield self.fetch(msp_id, url)
         self.write(json.dumps(response))
 
     def post(self) :
@@ -149,6 +151,39 @@ class SearchSellerHandler(tornado.web.RequestHandler) :
         self.write(json.dumps(response))
 
     def post(self) :
+        self.get()
+
+
+class MatchProductHandler(tornado.web.RequestHandler) :
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=100)
+
+    @tornado.concurrent.run_on_executor
+    def get_matches(self, name) :
+        response = []
+        results = []
+
+        if name :
+            sp = SmartPrice()
+            product_url = sp.match(name)
+            mspid = re.search('.*msp(\d*)$', product_url)
+            if mspid :
+                pid = mspid.group(1)
+                url = sp.pidurl(pid)
+                results = sp.seller(url)
+            elif product_url :
+                results = sp.seller(product_url)
+                
+            for r in results :
+                response.append(r.dumptojson)
+        return response
+
+    @tornado.gen.coroutine
+    def get(self) :
+        name = self.get_query_argument('name', None)
+        response = yield self.get_matches(name)
+        self.write(json.dumps(response))
+
+    def post(self):
         self.get()
 
 
