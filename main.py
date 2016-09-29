@@ -75,13 +75,15 @@ class FetchSellerHandler(tornado.web.RequestHandler) :
     executor = concurrent.futures.ThreadPoolExecutor(max_workers = 100)
 
     @tornado.concurrent.run_on_executor
-    def fetch(self, pid = None, url = None) :
+    def fetch(self, pid = None, url = None, color = None) :
         response = []
         results = []
         sp = SmartPrice()
         
         if pid :
             purl = sp.pidurl(pid)
+            if color :
+                purl = purl + '&color=' + color
             results = sp.seller(purl)
         elif url :
             results = sp.seller(url)
@@ -95,7 +97,8 @@ class FetchSellerHandler(tornado.web.RequestHandler) :
     def get(self) :
         msp_id = self.get_query_argument('msp_id', None)
         url = self.get_query_argument('url', None)
-        response = yield self.fetch(msp_id, url)
+        color = self.get_query_argument('color', None)
+        response = yield self.fetch(msp_id, url, color)
         self.write(json.dumps(response))
 
     def post(self) :
